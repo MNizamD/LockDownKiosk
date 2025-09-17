@@ -2,5 +2,9 @@ pyinstaller --onefile --noconsole Launcher.py
 pyinstaller --onefile --noconsole Start.py
 
 
-pyinstaller --onedir --noconfirm --noconsole Launcher.py
-pyinstaller --onedir --noconfirm --noconsole Start.py
+pyinstaller --onedir --noconfirm --noconsole LockDown.py
+pyinstaller --onedir --noconfirm --noconsole Main.py
+
+pyinstaller --onedir --name NizamLab LockDown.py Main.py
+
+pyinstaller combined.spec
