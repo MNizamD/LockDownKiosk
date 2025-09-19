@@ -33,7 +33,7 @@ LOCKDOWN_FILE_NAME = "LockDown.exe"
 LOCKDOWN_SCRIPT = os.path.join(APP_DIR, LOCKDOWN_FILE_NAME)
 MAIN_FILE_NAME = "Main.exe"
 
-CHECK_INTERVAL = 60  # seconds
+CHECK_INTERVAL = 30  # seconds
 LAST_DIR = os.path.abspath(os.path.join(APP_DIR, '..'))
 TEMP_DIR = os.path.join(LAST_DIR, "tmp_update")
 
@@ -149,9 +149,9 @@ def replace_old_with_temp(app_dir, temp_dir, ui: UpdateWindow):
 # ================= Main Loop ==================
 def updater_loop():
     while True:
-        # if not is_lockdown_running():
-        #     print("LockDown.exe not running → shutting down updater.")
-        #     sys.exit(0)
+        if not is_lockdown_running():
+            print("LockDown.exe not running → shutting down updater.")
+            sys.exit(0)
 
         if is_main_idle():
             print("Main is idle, safe to update")
