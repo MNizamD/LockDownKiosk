@@ -68,13 +68,14 @@ def run_if_not_running(path: str, is_background = False, arg:str = None):
     return None
 
 def kill_processes(names):
-    for proc in psutil.process_iter(["name"]):
-        try:
-            if proc.info["name"].lower() in [n.lower() for n in names]:
-                proc.kill()
-                time.sleep(5)
-        except psutil.NoSuchProcess:
-            pass
+    for n in names:
+        for proc in psutil.process_iter(["name"]):
+            try:
+                if proc.info["name"].lower() == n.lower():
+                    proc.kill()
+                    time.sleep(3)
+            except psutil.NoSuchProcess:
+                pass
 
 def duplicate_file(src:str, cpy:str):
     if os.path.exists(cpy):

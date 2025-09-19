@@ -140,7 +140,7 @@ def replace_old_with_temp(app_dir, temp_dir, ui: UpdateWindow):
 
     print("Replacing folder...")
     os.rename(temp_dir, app_dir)
-    shutil.rmtree(backup_dir, ignore_errors=True)
+    shutil.rmtree(backup_dir) #, ignore_errors=True)
 
     ui.set_message("Update applied")
 # ==============================================
