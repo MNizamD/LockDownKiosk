@@ -52,7 +52,7 @@ if not os.path.exists(MAIN_SCRIPT): # py script not found
         MAIN_FILE_NAME = "Main.exe"
         MAIN_SCRIPT = os.path.join(APP_DIR, MAIN_FILE_NAME)
 
-UPDATER_SCRIPT = os.path.join(APP_DIR, "Updater.py")
+UPDATER_SCRIPT = os.path.join(APP_DIR, "Updater.exe")
 UPDATER_SCRIPT_COPY = os.path.join(DATA_DIR, "Updater_copy.exe")
 
 def is_process_running(name: str) -> bool:
