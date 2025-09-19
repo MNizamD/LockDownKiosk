@@ -2,14 +2,29 @@ import tkinter as tk
 from tkinter import messagebox
 import csv
 import os
+import sys
+import json
 from datetime import datetime
 import socket
 
+def get_app_base_dir():
+    """
+    Return the directory that contains the running application.
+    Works for:
+      - dev mode (python script): returns folder of this .py file
+      - frozen mode (PyInstaller one-dir or one-file): returns folder of the exe
+    """
+    if getattr(sys, "frozen", False):
+        # Frozen by PyInstaller: sys.executable -> path to the running .exe
+        return os.path.dirname(sys.executable)
+    else:
+        # Running as plain python script
+        return os.path.dirname(os.path.abspath(__file__))
 
 # ================= CONFIG ==================
 # PROGRAM_FILES = os.environ.get("ProgramFiles", "C:\\Program Files")
 # PROGRAM_DATA = os.environ.get("ProgramData", "C:\\ProgramData")
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = get_app_base_dir()
 LOCALDATA = os.getenv("LOCALAPPDATA")
 
 APP_DIR = BASE_DIR   # app install dir (read-only)
@@ -20,6 +35,16 @@ LOG_FILE = os.path.join(DATA_DIR, "StudentLogs.csv")
 FLAG_FILE = os.path.join(DATA_DIR, "STOP_LAUNCHER.flag")
 
 PC_NAME = socket.gethostname()
+
+### --- Load details.json ---
+DETAILS_FILE = os.path.join(BASE_DIR, "details.json")
+DETAILS_INFO = {"version": "?", "updated": "?"}
+if os.path.exists(DETAILS_FILE):
+    try:
+        with open(DETAILS_FILE, "r") as f:
+            DETAILS_INFO = json.load(f)
+    except Exception as e:
+        print("Error reading details.json:", e)
 # ===========================================
 
 
@@ -47,6 +72,11 @@ def load_students():
 
 ALLOWED_STUDENTS = load_students()
 
+BG_COLOR = "#1f1f1f"
+BTN_COLOR = "#353434"
+FONT_COLOR = "white"
+SECONDARY_FONT_COLOR = "#aaaaaa"
+
 
 # ================= APP =====================
 class KioskApp:
@@ -55,7 +85,7 @@ class KioskApp:
         self.master.title("Lab Access")
         self.master.attributes('-fullscreen', True)  # Fullscreen at start
         self.master.attributes('-topmost', True)
-        self.master.configure(bg="#1f1f1f")
+        self.master.configure(bg=BG_COLOR)
         self.master.attributes("-alpha", 0.95)
         self.master.protocol("WM_DELETE_WINDOW", self.disable_event)
 
@@ -63,7 +93,7 @@ class KioskApp:
         self.login_time = None
 
         # --- Outer frame fills the window and centers content ---
-        self.frame = tk.Frame(master, bg="#1f1f1f")
+        self.frame = tk.Frame(master, bg=BG_COLOR)
         self.frame.pack(fill="both", expand=True)
 
         # Use grid layout to center everything
@@ -79,8 +109,8 @@ class KioskApp:
             self.frame,
             text=PC_NAME,
             font=("Arial", 48, "bold"),
-            fg="white",
-            bg="#1f1f1f",
+            fg=FONT_COLOR,
+            bg=BG_COLOR,
         )
         self.pc_label.grid(row=1, column=0, pady=(0, 20))
 
@@ -89,8 +119,8 @@ class KioskApp:
             self.frame,
             text="Enter Student ID to Access PC",
             font=("Arial", 16),
-            fg="white",
-            bg="#1f1f1f",
+            fg=FONT_COLOR,
+            bg=BG_COLOR,
         )
         self.label.grid(row=2, column=0, pady=(0, 20))
 
@@ -99,9 +129,9 @@ class KioskApp:
             self.frame,
             font=("Arial", 22),
             bg="#2e2e2e",
-            fg="white",
+            fg=FONT_COLOR,
             justify="center",
-            insertbackground="white",
+            insertbackground=FONT_COLOR,
         )
         self.entry.grid(row=3, column=0, pady=(0, 20))
         self.entry.focus()
@@ -110,6 +140,16 @@ class KioskApp:
         self.entry.bind("<Return>", lambda event: self.login())
         # Bind key release to dynamically mask non-digit input
         self.entry.bind("<KeyRelease>", self.check_input_mask)
+
+        ### --- Version/Update Info ---
+        self.version_label = tk.Label(
+            self.frame,
+            text=f"v{DETAILS_INFO.get('version','?')}  |  Updated: {DETAILS_INFO.get('updated','?')}",
+            font=("Arial", 10),
+            fg=SECONDARY_FONT_COLOR,
+            bg=BG_COLOR
+        )
+        self.version_label.grid(row=4, column=0, pady=(10, 5), sticky="s")
 
     # Disable closing
     def disable_event(self):
@@ -163,8 +203,8 @@ class KioskApp:
             self.frame,
             text=f"Welcome {ALLOWED_STUDENTS[self.student_id] or self.student_id}",
             font=("Arial", 12),
-            fg="white",
-            bg="#1f1f1f",
+            fg=FONT_COLOR,
+            bg=BG_COLOR,
         )
         welcome_label.pack(pady=5)
 
@@ -172,8 +212,8 @@ class KioskApp:
             self.frame,
             text="Logout",
             font=("Arial", 12),
-            fg="white",
-            bg="#353434",
+            fg=FONT_COLOR,
+            bg=BTN_COLOR,
             command=self.logout,
         )
         self.logout_button.pack(pady=10)
@@ -183,8 +223,8 @@ class KioskApp:
             self.frame,
             text="Logged in: 0s",
             font=("Arial", 10),
-            fg="white",
-            bg="#1f1f1f",
+            fg=FONT_COLOR,
+            bg=BG_COLOR,
         )
         self.status_label.pack(pady=2)
 

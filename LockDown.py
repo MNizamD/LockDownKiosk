@@ -1,9 +1,11 @@
 import subprocess
 import sys
+import json
 import os
 import time
 import shutil
 from tkinter import messagebox, Tk
+from db_utils import get_lock_kiosk_status
 
 def get_app_base_dir():
     """
@@ -30,6 +32,19 @@ DATA_DIR = os.path.join(LOCALDATA, "NizamLab")   # data dir (writable)
 
 LOG_FILE = os.path.join(DATA_DIR, "StudentLogs.csv")
 FLAG_FILE = os.path.join(DATA_DIR, "STOP_LAUNCHER.flag")
+
+# ### --- Load details.json ---
+# DETAILS_FILE = os.path.join(BASE_DIR, "details.json")
+# DETAILS_INFO = {}
+# if os.path.exists(DETAILS_FILE):
+#     try:
+#         with open(DETAILS_FILE, "r") as f:
+#             DETAILS_INFO = json.load(f)
+#     except Exception as e:
+#         print("Error reading details.json:", e)
+# # ===========================================
+
+lock_status = get_lock_kiosk_status()
 
 MAIN_FILE_NAME = "Main.py"
 START_SCRIPT = os.path.join(APP_DIR, MAIN_FILE_NAME)
@@ -72,6 +87,11 @@ def check_files():
 
 # ---------------- LAUNCHER ----------------
 def run_kiosk():
+    if not bool(lock_status["ENABLED"]):
+        print(lock_status)
+        print("Disabled on server")
+        return
+
     # Pre-check folder and disk
     ok, msg = check_files()
     if not ok:
