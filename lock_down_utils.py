@@ -60,9 +60,9 @@ def run_if_not_running(path: str, is_background = False, arg:str = None):
     if not is_process_running(exe_name):
         print(f"[INFO] Starting {exe_name}...")
         if is_background == True:
-            return run_background(path, arg)
+            run_background(path, arg)
         else:
-            return run_foreground(path)
+            run_foreground(path)
     else:
         print(f"[INFO] {exe_name} already running.")
     return None

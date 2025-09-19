@@ -289,7 +289,7 @@ class KioskApp:
         self.logout_button.config(state="disabled")
 
         # After 3 seconds, destroy and rerun
-        self.master.after(3000, self.master.destroy())
+        self.master.after(3000, lambda: self.master.destroy(), run())
 
 
 def run():

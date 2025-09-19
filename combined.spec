@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
+dev_mode = input("In development? (y/N): ") == "y"
 
 # --- Analysis for LockDown ---
 a1 = Analysis(
@@ -29,7 +30,7 @@ exe1 = EXE(
     bootloader_ignore_signals=False,
     strip=True,
     upx=True,
-    console=False,
+    console= dev_mode,
 )
 
 # --- Analysis for Main ---
@@ -59,7 +60,7 @@ exe2 = EXE(
     bootloader_ignore_signals=False,
     strip=True,
     upx=True,
-    console=False,
+    console=dev_mode,
 )
 
 # --- Analysis for Updater (one-file build) ---
@@ -91,7 +92,7 @@ exe3 = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=dev_mode,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
