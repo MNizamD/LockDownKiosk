@@ -62,7 +62,7 @@ exe2 = EXE(
     console=False,
 )
 
-# --- Analysis for Updater ---
+# --- Analysis for Updater (build as one-file) ---
 a3 = Analysis(
     ['Updater.py'],
     pathex=[],
@@ -79,27 +79,28 @@ a3 = Analysis(
 
 pyz3 = PYZ(a3.pure)
 
+# One-file build: no COLLECT step
 exe3 = EXE(
     pyz3,
     a3.scripts,
     [],
-    exclude_binaries=True,
+    exclude_binaries=False,     # keep deps bundled
     name='Updater',
     debug=False,
     bootloader_ignore_signals=False,
     strip=True,
     upx=True,
     console=False,
+    onefile=True,               # 🚨 one-file bundle
 )
 
-# --- Collect all into one dist folder ---
+# --- Collect LockDown + Main into one dist folder ---
 coll = COLLECT(
     exe1,
     exe2,
-    exe3,
-    a1.binaries + a2.binaries + a3.binaries,
-    a1.datas + a2.datas + a3.datas,
+    a1.binaries + a2.binaries,
+    a1.datas + a2.datas,
     strip=True,
     upx=True,
-    name='NizamLab',  # final dist folder
+    name='NizamLab',
 )

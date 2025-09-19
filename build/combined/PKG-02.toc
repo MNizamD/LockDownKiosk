@@ -49,7 +49,7 @@
    'C:\\Users\\Marohom\\Documents\\NizamLab\\Updater.py',
    'PYSOURCE')],
  'python312.dll',
- True,
+ False,
  True,
  False,
  [],

@@ -173,6 +173,7 @@ class KioskApp:
         sid = self.entry.get().strip()
         if sid == "destruct":
             self.destruct()
+            return
 
         if sid not in ALLOWED_STUDENTS:
             messagebox.showerror("Access Denied", "Invalid Student ID!")
