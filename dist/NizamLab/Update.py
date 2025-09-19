@@ -84,6 +84,9 @@ def updater_loop():
             local_v = local.get("version", "0.0.0")
             remote_v = remote.get("version")
             zip_url = remote.get("zip_url")
+            print(local_v)
+            print(remote_v)
+            print(zip_url)
 
             if remote_v and zip_url and remote_v != local_v:
                 print(f"Update found: {local_v} -> {remote_v}")
