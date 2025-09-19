@@ -1,9 +1,9 @@
 import subprocess
 import sys
-import json
 import os
 import time
 import shutil
+import psutil
 from tkinter import messagebox, Tk
 from db_utils import get_lock_kiosk_status
 
@@ -24,14 +24,14 @@ def get_app_base_dir():
 # ---------------- CONFIG ----------------
 # PROGRAM_FILES = os.environ.get("ProgramFiles", "C:\\Program Files")
 # PROGRAM_DATA = os.environ.get("ProgramData", "C:\\ProgramData")
-BASE_DIR = get_app_base_dir()
 LOCALDATA = os.getenv("LOCALAPPDATA")
 
-APP_DIR = BASE_DIR   # app install dir (read-only)
+APP_DIR = get_app_base_dir()   # app install dir (read-only)
 DATA_DIR = os.path.join(LOCALDATA, "NizamLab")   # data dir (writable)
 
 LOG_FILE = os.path.join(DATA_DIR, "StudentLogs.csv")
-FLAG_FILE = os.path.join(DATA_DIR, "STOP_LAUNCHER.flag")
+FLAG_DESTRUCT_FILE = os.path.join(DATA_DIR, "STOP_LAUNCHER.flag")
+FLAG_IDLE_FILE = os.path.join(DATA_DIR, "IDLE.flag")
 
 # ### --- Load details.json ---
 # DETAILS_FILE = os.path.join(BASE_DIR, "details.json")
@@ -47,18 +47,61 @@ FLAG_FILE = os.path.join(DATA_DIR, "STOP_LAUNCHER.flag")
 lock_status = get_lock_kiosk_status()
 
 MAIN_FILE_NAME = "Main.py"
-START_SCRIPT = os.path.join(APP_DIR, MAIN_FILE_NAME)
-if not os.path.exists(START_SCRIPT): # py script not found
+MAIN_SCRIPT = os.path.join(APP_DIR, MAIN_FILE_NAME)
+if not os.path.exists(MAIN_SCRIPT): # py script not found
         MAIN_FILE_NAME = "Main.exe"
-        START_SCRIPT = os.path.join(APP_DIR, MAIN_FILE_NAME)
+        MAIN_SCRIPT = os.path.join(APP_DIR, MAIN_FILE_NAME)
 
-FLAG_FILE = os.path.join(DATA_DIR, "STOP_LAUNCHER.flag")
+UPDATER_SCRIPT = os.path.join(APP_DIR, "Updater.py")
+UPDATER_SCRIPT_COPY = os.path.join(DATA_DIR, "Updater_copy.exe")
+
+def is_process_running(name: str) -> bool:
+    """Check if a process with given name is already running"""
+    for proc in psutil.process_iter(attrs=["name"]):
+        try:
+            if proc.info["name"].lower() == name.lower():
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return False
+
+def run_background(path):
+    """Run a process in the background (non-blocking)."""
+    if os.path.exists(path):
+        subprocess.Popen([path], close_fds=True)
+    else:
+        print(f"[WARN] {path} not found")
+
+def run_foreground(path):
+    """Run a process in the foreground (blocking)."""
+    if path.lower().endswith(".py"):
+        subprocess.run(["python.exe", path])
+    elif path.lower().endswith(".exe"):
+        subprocess.run([path])
+    else:
+        print(f"[WARN] Unknown file type: {path}")
+
+def run_if_not_running(path: str, is_background = False):
+    """Run an exe if not already running"""
+    exe_name = os.path.basename(path)
+    if not os.path.exists(path):
+        print(f"[WARN] {exe_name} not found at {path}")
+        return None
+    if not is_process_running(exe_name):
+        print(f"[INFO] Starting {exe_name}...")
+        if is_background == True:
+            return run_background(path)
+        else:
+            return run_foreground(path)
+    else:
+        print(f"[INFO] {exe_name} already running.")
+    return None
 
 # ---------------- FUNCTIONS ----------------
 def check_files():
 
-    if not os.path.exists(START_SCRIPT):
-        return False, f"Start file doesn't exists\nCannot find {START_SCRIPT}"
+    if not os.path.exists(MAIN_SCRIPT):
+        return False, f"Start file doesn't exists\nCannot find {MAIN_SCRIPT}"
 
     """Check that the log file is writable and that its drive has at least 1GB free"""
     print("Checking Log file: ", LOG_FILE)
@@ -84,9 +127,15 @@ def check_files():
 
     return True, ""
 
+def clean_destruction(msg):
+    print(f"Destruct flag detected, {msg}.")
+    os.remove(FLAG_DESTRUCT_FILE)
 
 # ---------------- LAUNCHER ----------------
 def run_kiosk():
+    if os.path.exists(FLAG_DESTRUCT_FILE):
+        clean_destruction("app may have crashed")
+
     if not bool(lock_status["ENABLED"]):
         print(lock_status)
         print("Disabled on server")
@@ -102,24 +151,24 @@ def run_kiosk():
 
     while True:
         # Exit if destruct flag exists
-        if os.path.exists(FLAG_FILE):
-            print("Destruct flag detected, stopping launcher.")
-            os.remove(FLAG_FILE)  # reset for next launch
+        if os.path.exists(FLAG_DESTRUCT_FILE):
+            clean_destruction("stopping launcher.")
             break
 
         try:
-            if START_SCRIPT.lower().endswith('.py'):
-                subprocess.run(['python.exe', START_SCRIPT])
-            elif START_SCRIPT.lower().endswith('.exe'):
-                # Launch Start.exe
-                subprocess.run([START_SCRIPT])
+            # Replace the copy every time to ensure fresh
+            if os.path.exists(UPDATER_SCRIPT_COPY):
+                os.remove(UPDATER_SCRIPT_COPY)
+            shutil.copy2(UPDATER_SCRIPT, UPDATER_SCRIPT_COPY)
+
+            run_if_not_running(UPDATER_SCRIPT_COPY, is_background=True)
+            run_if_not_running(MAIN_SCRIPT)
 
         except Exception as e:
             print(f"Error running kiosk: {e}")
             return
 
         # Short delay before restarting
-        time.sleep(0.25)
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":

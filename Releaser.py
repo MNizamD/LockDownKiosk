@@ -7,6 +7,7 @@ from datetime import datetime
 # ---------------- CONFIG ----------------
 DETAILS_FILE = "details.json"
 DIST_FOLDER = os.path.join("dist", "NizamLab")
+INSTALLER_FOLDER = "installer"   # <--- NEW
 RELEASE_LATEST = os.path.join("releases", "latest", "download")
 RELEASE_OLD = os.path.join("releases", "old_versions")
 ZIP_BASENAME = "NizamLab"
@@ -26,6 +27,8 @@ def bump_version(version: str, part: str) -> str:
         raise ValueError("Invalid bump type. Use mj/mn/p")
     return f"{major}.{minor}.{patch}"
 
+INSTALLER_FOLDER = "installer"  # add this at the top with other configs
+
 def make_zip(new_version: str):
     os.makedirs(RELEASE_LATEST, exist_ok=True)
     os.makedirs(RELEASE_OLD, exist_ok=True)
@@ -34,18 +37,26 @@ def make_zip(new_version: str):
     zip_path = os.path.join(RELEASE_LATEST, zip_name)
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        # Add dist/NizamLab content
+        # Add dist/NizamLab content (preserve structure under NizamLab/)
         for root, _, files in os.walk(DIST_FOLDER):
             for file in files:
                 abs_path = os.path.join(root, file)
                 rel_path = os.path.relpath(abs_path, DIST_FOLDER)
-                zf.write(abs_path, arcname=rel_path)
+                zf.write(abs_path, arcname=os.path.join("NizamLab", rel_path))
 
-        # Add updated details.json
-        zf.write(DETAILS_FILE, arcname="details.json")
+        # Add installer files (flat) into NizamLab/
+        if os.path.exists(INSTALLER_FOLDER):
+            for file in os.listdir(INSTALLER_FOLDER):
+                abs_path = os.path.join(INSTALLER_FOLDER, file)
+                if os.path.isfile(abs_path):  # only files
+                    zf.write(abs_path, arcname=os.path.join("NizamLab", file))
+
+        # Add updated details.json (overwrite inside NizamLab/)
+        zf.write(DETAILS_FILE, arcname=os.path.join("NizamLab", "details.json"))
 
     print(f"[+] New release created: {zip_path}")
     return zip_path
+
 
 def main():
     # Load details.json

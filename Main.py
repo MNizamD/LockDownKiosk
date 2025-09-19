@@ -32,7 +32,8 @@ DATA_DIR = os.path.join(LOCALDATA, "NizamLab")   # data dir (writable)
 
 STUDENT_CSV = os.path.join(DATA_DIR, "Students.csv")
 LOG_FILE = os.path.join(DATA_DIR, "StudentLogs.csv")
-FLAG_FILE = os.path.join(DATA_DIR, "STOP_LAUNCHER.flag")
+FLAG_DESTRUCT_FILE = os.path.join(DATA_DIR, "STOP_LAUNCHER.flag")
+FLAG_IDLE_FILE = os.path.join(DATA_DIR, "IDLE.flag")
 
 PC_NAME = socket.gethostname()
 
@@ -81,6 +82,10 @@ SECONDARY_FONT_COLOR = "#aaaaaa"
 # ================= APP =====================
 class KioskApp:
     def __init__(self, master):
+        # create idle flag ---
+        with open(FLAG_IDLE_FILE, "w") as f:
+            f.write("IDLE")
+
         self.master = master
         self.master.title("Lab Access")
         self.master.attributes('-fullscreen', True)  # Fullscreen at start
@@ -167,11 +172,7 @@ class KioskApp:
     def login(self):
         sid = self.entry.get().strip()
         if sid == "destruct":
-            # create STOP flag
-            with open(FLAG_FILE, "w") as f:
-                f.write("STOP")
-            self.master.destroy()
-            return
+            self.destruct()
 
         if sid not in ALLOWED_STUDENTS:
             messagebox.showerror("Access Denied", "Invalid Student ID!")
@@ -187,7 +188,19 @@ class KioskApp:
             writer.writerow([self.student_id, PC_NAME, self.login_time, ""])
 
         # Switch to logged-in view
+        if os.path.exists(FLAG_IDLE_FILE):
+            os.remove(FLAG_IDLE_FILE)
+        
         self.show_logged_in()
+
+    def destruct(self):
+        # remove idle flag
+        if os.path.exists(FLAG_IDLE_FILE):
+            os.remove(FLAG_IDLE_FILE)
+        # create STOP flag
+        with open(FLAG_DESTRUCT_FILE, "w") as f:
+            f.write("STOP")
+        self.master.destroy()
 
     def show_logged_in(self):
         # Shrink window to normal size
@@ -275,7 +288,7 @@ class KioskApp:
         self.logout_button.config(state="disabled")
 
         # After 3 seconds, destroy and rerun
-        self.master.after(3000, lambda: (self.master.destroy(), run()))
+        self.master.after(3000, self.master.destroy())
 
 
 def run():

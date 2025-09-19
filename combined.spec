@@ -2,7 +2,7 @@
 
 block_cipher = None
 
-# --- Analysis for LockDown (Launcher) ---
+# --- Analysis for LockDown ---
 a1 = Analysis(
     ['LockDown.py'],
     pathex=[],
@@ -27,12 +27,12 @@ exe1 = EXE(
     name='LockDown',
     debug=False,
     bootloader_ignore_signals=False,
-    strip=True,          # strip for smaller + faster load
+    strip=True,
     upx=True,
     console=False,
 )
 
-# --- Analysis for Main (Start) ---
+# --- Analysis for Main ---
 a2 = Analysis(
     ['Main.py'],
     pathex=[],
@@ -62,12 +62,43 @@ exe2 = EXE(
     console=False,
 )
 
-# --- Collect into one dist folder ---
+# --- Analysis for Updater ---
+a3 = Analysis(
+    ['Updater.py'],
+    pathex=[],
+    binaries=[],
+    datas=[],
+    hiddenimports=[],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    noarchive=False,
+    optimize=0,
+)
+
+pyz3 = PYZ(a3.pure)
+
+exe3 = EXE(
+    pyz3,
+    a3.scripts,
+    [],
+    exclude_binaries=True,
+    name='Updater',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=True,
+    upx=True,
+    console=False,
+)
+
+# --- Collect all into one dist folder ---
 coll = COLLECT(
     exe1,
     exe2,
-    a1.binaries + a2.binaries,
-    a1.datas + a2.datas,
+    exe3,
+    a1.binaries + a2.binaries + a3.binaries,
+    a1.datas + a2.datas + a3.datas,
     strip=True,
     upx=True,
     name='NizamLab',  # final dist folder
