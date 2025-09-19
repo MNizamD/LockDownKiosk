@@ -42,14 +42,14 @@ def make_zip(new_version: str):
             for file in files:
                 abs_path = os.path.join(root, file)
                 rel_path = os.path.relpath(abs_path, DIST_FOLDER)
-                zf.write(abs_path, arcname=os.path.join("NizamLab", rel_path))
+                zf.write(abs_path, arcname=rel_path)
 
         # Add installer files (flat) into NizamLab/
         if os.path.exists(INSTALLER_FOLDER):
             for file in os.listdir(INSTALLER_FOLDER):
                 abs_path = os.path.join(INSTALLER_FOLDER, file)
                 if os.path.isfile(abs_path):  # only files
-                    zf.write(abs_path, arcname=os.path.join("NizamLab", file))
+                    zf.write(abs_path, arcname=rel_path)
 
         # Add updated details.json (overwrite inside NizamLab/)
         zf.write(DETAILS_FILE, arcname=os.path.join("NizamLab", "details.json"))

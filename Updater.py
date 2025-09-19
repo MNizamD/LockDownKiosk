@@ -9,9 +9,9 @@ import time
 import shutil
 import tkinter as tk
 from tkinter import ttk
+from lock_down_utils import is_process_running, kill_processes, get_process_arg
 
 # ---------------- CONFIG ----------------
-DETAILS_FILE = "details.json"
 REPO_RAW = "https://raw.githubusercontent.com/MNizamD/LockDownKiosk/main"
 RELEASE_URL = "https://github.com/MNizamD/LockDownKiosk/raw/main/releases/latest/download"
 ZIP_BASENAME = "NizamLab"
@@ -23,16 +23,20 @@ def get_app_base_dir():
     else:
         return os.path.dirname(os.path.abspath(__file__))
 
-APP_DIR = get_app_base_dir()
+ARGS_DIR = get_process_arg(sys)
+APP_DIR = ARGS_DIR if ARGS_DIR is not None else get_app_base_dir() 
 DATA_DIR = os.path.join(LOCALDATA, "NizamLab")
 FLAG_IDLE_FILE = os.path.join(DATA_DIR, "IDLE.flag")
+DETAILS_FILE = os.path.join(APP_DIR, "details.json")
 
 LOCKDOWN_FILE_NAME = "LockDown.exe"
 LOCKDOWN_SCRIPT = os.path.join(APP_DIR, LOCKDOWN_FILE_NAME)
 MAIN_FILE_NAME = "Main.exe"
 
 CHECK_INTERVAL = 60  # seconds
-TEMP_DIR = os.path.join(APP_DIR, "tmp_update")
+LAST_DIR = os.path.abspath(os.path.join(APP_DIR, '..'))
+TEMP_DIR = os.path.join(LAST_DIR, "tmp_update")
+
 # ----------------------------------------
 
 # ================= Tkinter UI =================
@@ -83,21 +87,12 @@ def get_remote_version():
     return r.json()
 
 def is_main_idle():
-    return os.path.exists(FLAG_IDLE_FILE)
+    if is_process_running(MAIN_FILE_NAME):
+        return os.path.exists(FLAG_IDLE_FILE)
+    return True
 
 def is_lockdown_running():
-    for proc in psutil.process_iter(attrs=["name"]):
-        if proc.info["name"].lower() == LOCKDOWN_FILE_NAME.lower():
-            return True
-    return False
-
-def kill_processes(names):
-    for proc in psutil.process_iter(["name"]):
-        try:
-            if proc.info["name"].lower() in [n.lower() for n in names]:
-                proc.kill()
-        except psutil.NoSuchProcess:
-            pass
+    return is_process_running(LOCKDOWN_FILE_NAME)
 # ==============================================
 
 
@@ -137,10 +132,13 @@ def replace_old_with_temp(app_dir, temp_dir, ui: UpdateWindow):
 
     backup_dir = app_dir + "_old"
     if os.path.exists(backup_dir):
+        print("Removing old backup...")
         shutil.rmtree(backup_dir)
     if os.path.exists(app_dir):
+        print("Creating backup folder...")
         os.rename(app_dir, backup_dir)
 
+    print("Replacing folder...")
     os.rename(temp_dir, app_dir)
     shutil.rmtree(backup_dir, ignore_errors=True)
 
@@ -151,15 +149,17 @@ def replace_old_with_temp(app_dir, temp_dir, ui: UpdateWindow):
 # ================= Main Loop ==================
 def updater_loop():
     while True:
-        if not is_lockdown_running():
-            print("LockDown.exe not running → shutting down updater.")
-            sys.exit(0)
+        # if not is_lockdown_running():
+        #     print("LockDown.exe not running → shutting down updater.")
+        #     sys.exit(0)
 
         if is_main_idle():
+            print("Main is idle, safe to update")
             try:
                 local = get_local_version()
                 remote = get_remote_version()
                 if not local:
+                    print(f"Details not found at {DETAILS_FILE}")
                     time.sleep(CHECK_INTERVAL)
                     continue
 
@@ -167,13 +167,14 @@ def updater_loop():
                 remote_ver = remote["version"]
 
                 if local_ver != remote_ver:
+                    print("Update available")
                     ui = UpdateWindow()
                     ui.set_message(f"Updating {local_ver} → {remote_ver}")
 
                     kill_processes([LOCKDOWN_FILE_NAME, MAIN_FILE_NAME])
 
                     zip_url = f"{RELEASE_URL}/{ZIP_BASENAME}-{remote_ver}.zip"
-                    zip_path = os.path.join(APP_DIR, "update.zip")
+                    zip_path = os.path.join(LAST_DIR, "update.zip")
 
                     download_with_progress(zip_url, zip_path, ui)
                     extract_zip(zip_path, TEMP_DIR, ui)

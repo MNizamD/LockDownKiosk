@@ -5,7 +5,7 @@ import time
 import shutil
 import psutil
 from tkinter import messagebox, Tk
-from db_utils import get_lock_kiosk_status
+from lock_down_utils import get_lock_kiosk_status, run_if_not_running, duplicate_file
 
 def get_app_base_dir():
     """
@@ -54,48 +54,8 @@ if not os.path.exists(MAIN_SCRIPT): # py script not found
 
 UPDATER_SCRIPT = os.path.join(APP_DIR, "Updater.exe")
 UPDATER_SCRIPT_COPY = os.path.join(DATA_DIR, "Updater_copy.exe")
-
-def is_process_running(name: str) -> bool:
-    """Check if a process with given name is already running"""
-    for proc in psutil.process_iter(attrs=["name"]):
-        try:
-            if proc.info["name"].lower() == name.lower():
-                return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            continue
-    return False
-
-def run_background(path):
-    """Run a process in the background (non-blocking)."""
-    if os.path.exists(path):
-        subprocess.Popen([path], close_fds=True)
-    else:
-        print(f"[WARN] {path} not found")
-
-def run_foreground(path):
-    """Run a process in the foreground (blocking)."""
-    if path.lower().endswith(".py"):
-        subprocess.run(["python.exe", path])
-    elif path.lower().endswith(".exe"):
-        subprocess.run([path])
-    else:
-        print(f"[WARN] Unknown file type: {path}")
-
-def run_if_not_running(path: str, is_background = False):
-    """Run an exe if not already running"""
-    exe_name = os.path.basename(path)
-    if not os.path.exists(path):
-        print(f"[WARN] {exe_name} not found at {path}")
-        return None
-    if not is_process_running(exe_name):
-        print(f"[INFO] Starting {exe_name}...")
-        if is_background == True:
-            return run_background(path)
-        else:
-            return run_foreground(path)
-    else:
-        print(f"[INFO] {exe_name} already running.")
-    return None
+DETAILS_FILE = os.path.join(APP_DIR, "details.json")
+DETAILS_FILE_COPY = os.path.join(DATA_DIR, "details.json")
 
 # ---------------- FUNCTIONS ----------------
 def check_files():
@@ -157,11 +117,9 @@ def run_kiosk():
 
         try:
             # Replace the copy every time to ensure fresh
-            if os.path.exists(UPDATER_SCRIPT_COPY):
-                os.remove(UPDATER_SCRIPT_COPY)
-            shutil.copy2(UPDATER_SCRIPT, UPDATER_SCRIPT_COPY)
+            # duplicate_file(UPDATER_SCRIPT, UPDATER_SCRIPT_COPY)
 
-            run_if_not_running(UPDATER_SCRIPT_COPY, is_background=True)
+            run_if_not_running(UPDATER_SCRIPT, is_background=True, arg=APP_DIR)
             run_if_not_running(MAIN_SCRIPT)
 
         except Exception as e:

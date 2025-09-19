@@ -29,7 +29,7 @@ exe1 = EXE(
     bootloader_ignore_signals=False,
     strip=True,
     upx=True,
-    console=False,
+    console=True,
 )
 
 # --- Analysis for Main ---
@@ -62,8 +62,8 @@ exe2 = EXE(
     console=False,
 )
 
-# --- Analysis for Updater (build as one-file) ---
-a3 = Analysis(
+# --- Analysis for Updater (one-file build) ---
+a3  = Analysis(
     ['Updater.py'],
     pathex=[],
     binaries=[],
@@ -76,22 +76,27 @@ a3 = Analysis(
     noarchive=False,
     optimize=0,
 )
-
 pyz3 = PYZ(a3.pure)
 
-# One-file build: no COLLECT step
 exe3 = EXE(
     pyz3,
     a3.scripts,
+    a3.binaries,
+    a3.datas,
     [],
-    exclude_binaries=False,     # keep deps bundled
     name='Updater',
     debug=False,
     bootloader_ignore_signals=False,
-    strip=True,
+    strip=False,
     upx=True,
-    console=False,
-    onefile=True,               # 🚨 one-file bundle
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
 )
 
 # --- Collect LockDown + Main into one dist folder ---
@@ -104,3 +109,12 @@ coll = COLLECT(
     upx=True,
     name='NizamLab',
 )
+
+# --- Extra: move standalone Updater.exe into NizamLab ---
+import shutil, os
+distpath = os.path.join(os.getcwd(), 'dist')
+src = os.path.join(distpath, 'Updater.exe')
+dst = os.path.join(distpath, 'NizamLab', 'Updater.exe')
+
+if os.path.exists(src):
+    shutil.move(src, dst)
