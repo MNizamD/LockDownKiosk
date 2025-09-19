@@ -48,11 +48,13 @@ def make_zip(new_version: str):
         if os.path.exists(INSTALLER_FOLDER):
             for file in os.listdir(INSTALLER_FOLDER):
                 abs_path = os.path.join(INSTALLER_FOLDER, file)
+                rel_path = os.path.relpath(abs_path, DIST_FOLDER)
                 if os.path.isfile(abs_path):  # only files
                     zf.write(abs_path, arcname=rel_path)
 
         # Add updated details.json (overwrite inside NizamLab/)
-        zf.write(DETAILS_FILE, arcname=os.path.join("NizamLab", "details.json"))
+        rel_path = os.path.relpath(abs_path, DIST_FOLDER)
+        zf.write(DETAILS_FILE, arcname=DETAILS_FILE)
 
     print(f"[+] New release created: {zip_path}")
     return zip_path
