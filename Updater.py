@@ -88,7 +88,7 @@ def get_remote_version():
 
 def is_main_idle():
     if is_process_running(MAIN_FILE_NAME):
-        return os.path.exists(FLAG_IDLE_FILE)
+        return not os.path.exists(FLAG_IDLE_FILE)
     return True
 
 def is_lockdown_running():
