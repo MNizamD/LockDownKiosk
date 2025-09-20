@@ -1,11 +1,10 @@
-import subprocess
 import sys
 import os
 import time
 import shutil
-import psutil
+from collections import deque
 from tkinter import messagebox, Tk
-from lock_down_utils import get_lock_kiosk_status, run_if_not_running, duplicate_file
+from lock_down_utils import get_lock_kiosk_status, run_if_not_running, duplicate_file, is_crash_loop
 
 def get_app_base_dir():
     """
@@ -49,8 +48,8 @@ lock_status = get_lock_kiosk_status()
 MAIN_FILE_NAME = "Main.py"
 MAIN_SCRIPT = os.path.join(APP_DIR, MAIN_FILE_NAME)
 if not os.path.exists(MAIN_SCRIPT): # py script not found
-        MAIN_FILE_NAME = "Main.exe"
-        MAIN_SCRIPT = os.path.join(APP_DIR, MAIN_FILE_NAME)
+    MAIN_FILE_NAME = "Main.exe"
+    MAIN_SCRIPT = os.path.join(APP_DIR, MAIN_FILE_NAME)
 
 UPDATER_SCRIPT = os.path.join(APP_DIR, "Updater.exe")
 UPDATER_SCRIPT_COPY = os.path.join(DATA_DIR, "Updater_copy.exe")
@@ -92,6 +91,14 @@ def clean_destruction(msg):
     os.remove(FLAG_DESTRUCT_FILE)
 
 # ---------------- LAUNCHER ----------------
+
+def emergency_update():
+    print("[!] Detected crash loop — running emergency update")
+    duplicate_file(UPDATER_SCRIPT, UPDATER_SCRIPT_COPY)
+    run_if_not_running(UPDATER_SCRIPT_COPY, is_background=True, arg=APP_DIR)
+    time.sleep(10)
+
+
 def run_kiosk():
     if os.path.exists(FLAG_DESTRUCT_FILE):
         clean_destruction("app may have crashed")
@@ -108,7 +115,8 @@ def run_kiosk():
         root.withdraw()  # hide main window
         messagebox.showwarning("Launcher Warning", f"Cannot start kiosk:\n\n{msg}")
         return
-
+    
+    LOOP_HISTORY = deque(maxlen=5)
     while True:
         # Exit if destruct flag exists
         if os.path.exists(FLAG_DESTRUCT_FILE):
@@ -116,6 +124,11 @@ def run_kiosk():
             break
 
         try:
+            if is_crash_loop(loop_history=LOOP_HISTORY, threshold=5, window=3):
+                emergency_update()
+                return
+            print(LOOP_HISTORY)
+
             # Replace the copy every time to ensure fresh
             duplicate_file(UPDATER_SCRIPT, UPDATER_SCRIPT_COPY)
 
@@ -128,6 +141,7 @@ def run_kiosk():
             # Emergency update
             duplicate_file(UPDATER_SCRIPT, UPDATER_SCRIPT_COPY)
             run_if_not_running(UPDATER_SCRIPT_COPY, is_background=True, arg=APP_DIR)
+            time.sleep(10)
             return
 
         # Short delay before restarting

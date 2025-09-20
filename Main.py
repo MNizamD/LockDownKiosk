@@ -82,7 +82,7 @@ SECONDARY_FONT_COLOR = "#aaaaaa"
 # ================= APP =====================
 class KioskApp:
     def __init__(self, master):
-        self.last_activity = datetime.now()
+        # self.last_activity = datetime.now()
 
         self.master = master
         self.master.title("Lab Access")

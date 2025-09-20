@@ -6,6 +6,34 @@ import shutil
 import tempfile
 import time
 
+import time
+from collections import deque
+
+# Track recent loop times
+# LOOP_HISTORY = deque(maxlen=5)  # keep timestamps of last 5 loops
+
+def is_crash_loop(loop_history: deque, threshold=5, window=1.0):
+    """
+    Detects if the loop is repeating too fast (e.g., crashes).
+    - threshold: how many loops inside 'window' seconds trigger crash detection
+    - window: time in seconds
+    """
+    now = time.time()
+    loop_history.append(now)
+
+    # Keep only the most recent `threshold` timestamps
+    while len(loop_history) > threshold:
+        loop_history.popleft()
+
+    # If we have enough samples, check time difference
+    if len(loop_history) == loop_history.maxlen:
+        # oldest vs newest in history
+        duration = loop_history[-1] - loop_history[0]
+        if duration < window:
+            return True
+    return False
+
+
 def is_process_running(name: str) -> bool:
     """Check if a process with given name is already running"""
     for proc in psutil.process_iter(attrs=["name"]):
