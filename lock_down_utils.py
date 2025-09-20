@@ -5,6 +5,8 @@ import subprocess
 import shutil
 import tempfile
 import time
+import os
+import json
 
 import time
 from collections import deque
@@ -113,6 +115,10 @@ def duplicate_file(src:str, cpy:str):
     except Exception as e:
         print(f"Duplication error: {e}")
 
+
+LOCALDATA = os.getenv("LOCALAPPDATA")
+DATA_DIR = os.path.join(LOCALDATA, "NizamLab")   # data dir (writable)
+CACHE_FILE = os.path.join(DATA_DIR, "lock_kiosk_status.json")
 def get_lock_kiosk_status() -> dict:
     try:
         # Connect with your Supabase Postgres URI
@@ -129,11 +135,25 @@ def get_lock_kiosk_status() -> dict:
         # Convert to dictionary
         lock_status = {key: value for key, value in rows}
 
+        # Save to file (cache)
+        with open(CACHE_FILE, "w") as f:
+            json.dump(lock_status, f)
+
         cur.close()
         conn.close()
         return lock_status
     except psycopg2.OperationalError as e:
         print(f"Fetching failed: {e}")
+
+        # Try reading from cache
+        if os.path.exists(CACHE_FILE):
+            try:
+                with open(CACHE_FILE, "r") as f:
+                    return json.load(f)
+            except Exception as read_err:
+                print(f"Cache read error: {read_err}")
+
+        # Default fallback
         return {"ENABLED": True}
 
 if __name__ == "__main__":
