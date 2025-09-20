@@ -39,6 +39,7 @@ def make_zip(new_version: str):
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         # Add dist/NizamLab content (preserve structure under NizamLab/)
         for root, _, files in os.walk(DIST_FOLDER):
+            print(f"[+] Zipping: {root}")
             for file in files:
                 abs_path = os.path.join(root, file)
                 rel_path = os.path.relpath(abs_path, DIST_FOLDER)
@@ -49,10 +50,12 @@ def make_zip(new_version: str):
             for file in os.listdir(INSTALLER_FOLDER):
                 abs_path = os.path.join(INSTALLER_FOLDER, file)
                 if os.path.isfile(abs_path):  # only files
+                    print(f"[+] Zipping: {abs_path}")
                     zf.write(abs_path, arcname=file)
 
         # Add updated details.json (overwrite inside NizamLab/)
         rel_path = os.path.relpath(abs_path, DIST_FOLDER)
+        print(f"[+] Zipping: {DETAILS_FILE}")
         zf.write(DETAILS_FILE, arcname=DETAILS_FILE)
 
     print(f"[+] New release created: {zip_path}")
