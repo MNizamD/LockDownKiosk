@@ -83,8 +83,6 @@ SECONDARY_FONT_COLOR = "#aaaaaa"
 class KioskApp:
     def __init__(self, master):
         # create idle flag ---
-        with open(FLAG_IDLE_FILE, "w") as f:
-            f.write("IDLE")
 
         self.master = master
         self.master.title("Lab Access")
@@ -145,6 +143,7 @@ class KioskApp:
         self.entry.bind("<Return>", lambda event: self.login())
         # Bind key release to dynamically mask non-digit input
         self.entry.bind("<KeyRelease>", self.check_input_mask)
+        self.entry.bind("<Key>", self.reset_idle_timer)   # <--- NEW
 
         ### --- Version/Update Info ---
         self.version_label = tk.Label(
@@ -155,6 +154,32 @@ class KioskApp:
             bg=BG_COLOR
         )
         self.version_label.grid(row=4, column=0, pady=(10, 5), sticky="s")
+
+         # Start idle checker
+        self.check_idle()
+
+    def reset_idle_timer(self, event=None):
+        """Called whenever there is keyboard input"""
+        self.last_activity = datetime.now()
+        # Remove idle flag if it exists (user is active)
+        self.remove_idle()
+
+    def check_idle(self):
+        """Check every second if user has been idle > 60s"""
+        elapsed = (datetime.now() - self.last_activity).seconds
+        if elapsed >= 60:  # idle threshold
+            self.write_idle()
+        # recheck every second
+        self.master.after(1000, self.check_idle)
+    
+    def write_idle(self):
+        if not os.path.exists(FLAG_IDLE_FILE):
+            with open(FLAG_IDLE_FILE, "w") as f:
+                f.write("IDLE")
+
+    def remove_idle(self):
+        if os.path.exists(FLAG_IDLE_FILE):
+            os.remove(FLAG_IDLE_FILE)
 
     # Disable closing
     def disable_event(self):
@@ -189,15 +214,13 @@ class KioskApp:
             writer.writerow([self.student_id, PC_NAME, self.login_time, ""])
 
         # Switch to logged-in view
-        if os.path.exists(FLAG_IDLE_FILE):
-            os.remove(FLAG_IDLE_FILE)
+        self.remove_idle()
         
         self.show_logged_in()
 
     def destruct(self):
         # remove idle flag
-        if os.path.exists(FLAG_IDLE_FILE):
-            os.remove(FLAG_IDLE_FILE)
+        self.remove_idle()
         # create STOP flag
         with open(FLAG_DESTRUCT_FILE, "w") as f:
             f.write("STOP")

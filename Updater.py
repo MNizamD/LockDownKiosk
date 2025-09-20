@@ -193,6 +193,8 @@ def updater_loop():
 
             except Exception as e:
                 print(f"[ERR] {e}")
+        else:
+            print("Main is in used, unsafe to update")
 
         time.sleep(CHECK_INTERVAL)
 

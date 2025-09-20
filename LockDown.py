@@ -117,16 +117,18 @@ def run_kiosk():
 
         try:
             # Replace the copy every time to ensure fresh
-            duplicate_file(UPDATER_SCRIPT, UPDATER_SCRIPT_COPY)
+            # duplicate_file(UPDATER_SCRIPT, UPDATER_SCRIPT_COPY)
 
-            run_if_not_running(UPDATER_SCRIPT_COPY, is_background=True, arg=APP_DIR)
+            # run_if_not_running(UPDATER_SCRIPT_COPY, is_background=True, arg=APP_DIR)
             run_if_not_running(MAIN_SCRIPT)
+            print("Next loop")
 
         except Exception as e:
             print(f"Error running kiosk: {e}")
             return
 
         # Short delay before restarting
+        time.sleep(0.25)
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
