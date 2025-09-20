@@ -12,7 +12,7 @@ from collections import deque
 # Track recent loop times
 # LOOP_HISTORY = deque(maxlen=5)  # keep timestamps of last 5 loops
 
-def is_crash_loop(loop_history: deque, threshold=5, window=1.0):
+def is_crash_loop(loop_history: deque, threshold=5, interval=1.0):
     """
     Detects if the loop is repeating too fast (e.g., crashes).
     - threshold: how many loops inside 'window' seconds trigger crash detection
@@ -29,7 +29,7 @@ def is_crash_loop(loop_history: deque, threshold=5, window=1.0):
     if len(loop_history) == loop_history.maxlen:
         # oldest vs newest in history
         duration = loop_history[-1] - loop_history[0]
-        if duration < window:
+        if duration < interval:
             return True
     return False
 
@@ -106,9 +106,12 @@ def kill_processes(names):
                 pass
 
 def duplicate_file(src:str, cpy:str):
-    if os.path.exists(cpy):
-        os.remove(cpy)
-    shutil.copy2(src, cpy)
+    try:
+        if os.path.exists(cpy):
+            os.remove(cpy)
+        shutil.copy2(src, cpy)
+    except Exception as e:
+        print(f"Duplication error: {e}")
 
 def get_lock_kiosk_status() -> dict:
     try:

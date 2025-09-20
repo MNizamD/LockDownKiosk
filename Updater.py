@@ -9,7 +9,7 @@ import time
 import shutil
 import tkinter as tk
 from tkinter import ttk
-from lock_down_utils import is_process_running, kill_processes, get_process_arg
+from lock_down_utils import is_process_running, kill_processes, get_process_arg, run_if_not_running
 
 # ---------------- CONFIG ----------------
 REPO_RAW = "https://raw.githubusercontent.com/MNizamD/LockDownKiosk/main"
@@ -150,7 +150,7 @@ def replace_old_with_temp(app_dir, temp_dir, ui: UpdateWindow):
 def updater_loop():
     while True:
         if not is_lockdown_running():
-            print("LockDown.exe not running → shutting down updater.")
+            print(f"{LOCKDOWN_FILE_NAME} not running → shutting down updater.")
             sys.exit(0)
 
         if is_main_idle():
@@ -184,10 +184,8 @@ def updater_loop():
                     ui.set_message("Restarting LockDown...")
                     time.sleep(2)
                     ui.close()
-
-                    if os.path.exists(LOCKDOWN_SCRIPT):
-                        subprocess.Popen([LOCKDOWN_SCRIPT], close_fds=True)
-                    break
+                    run_if_not_running(LOCKDOWN_SCRIPT, is_background=True)
+                    return
                 else:
                     print("[=] Already up to date.")
 

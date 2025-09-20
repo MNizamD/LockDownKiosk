@@ -96,7 +96,7 @@ def emergency_update():
     print("[!] Detected crash loop — running emergency update")
     duplicate_file(UPDATER_SCRIPT, UPDATER_SCRIPT_COPY)
     run_if_not_running(UPDATER_SCRIPT_COPY, is_background=True, arg=APP_DIR)
-    time.sleep(10)
+    time.sleep(20)
 
 
 def run_kiosk():
@@ -124,7 +124,7 @@ def run_kiosk():
             break
 
         try:
-            if is_crash_loop(loop_history=LOOP_HISTORY, threshold=5, window=3):
+            if is_crash_loop(loop_history=LOOP_HISTORY, threshold=5, interval=5):
                 emergency_update()
                 return
             print(LOOP_HISTORY)
@@ -139,9 +139,7 @@ def run_kiosk():
         except Exception as e:
             print(f"Error running kiosk: {e}")
             # Emergency update
-            duplicate_file(UPDATER_SCRIPT, UPDATER_SCRIPT_COPY)
-            run_if_not_running(UPDATER_SCRIPT_COPY, is_background=True, arg=APP_DIR)
-            time.sleep(10)
+            emergency_update()
             return
 
         # Short delay before restarting
