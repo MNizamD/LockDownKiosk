@@ -6,20 +6,19 @@ REM ========================================================
 
 :: CONFIG
 set TASKNAME=LockDownKiosk
-set USERONLY=Marohom
-set APPDIR=C:\Program Files\NizamLab
-set APPNAME=Launcher.exe
+set USERONLY=GVC
+set APPDIR=%ProgramData%\NizamLab
+set APPNAME=LockDown.exe
 
 :: Paths
 set CURDIR=%~dp0
-set DESTDIR=C:\Program Files\NizamLab
+set DESTDIR=%APPDIR%
 set XMLFILE=%CURDIR%LockDownKiosk.xml
 set APPEXEPATH=%APPDIR%\%APPNAME%
 set USERNAME=%COMPUTERNAME%\%USERONLY%
 
 :: Build ISO8601 Date for <Date>
-for /f "tokens=2 delims==" %%I in ('"wmic os get LocalDateTime /value"') do set ldt=%%I
-set DATEISO=%ldt:~0,4%-%ldt:~4,2%-%ldt:~6,2%T%ldt:~8,2%:%ldt:~10,2%:%ldt:~12,2%
+for /f %%I in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-ddTHH:mm:ss"') do set DATEISO=%%I
 
 echo Generating Task Scheduler XML at "%XMLFILE%"...
 

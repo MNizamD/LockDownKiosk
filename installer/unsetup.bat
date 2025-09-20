@@ -7,7 +7,7 @@ REM ========================================================
 
 :: CHANGE THESE if needed
 set TASKNAME=LockDownKiosk
-set DESTDIR=C:\Program Files\NizamLab
+set DESTDIR=%ProgramData%\NizamLab
 
 echo Removing Scheduled Task "%TASKNAME%"...
 schtasks /delete /tn "%TASKNAME%" /f
