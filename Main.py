@@ -82,7 +82,7 @@ SECONDARY_FONT_COLOR = "#aaaaaa"
 # ================= APP =====================
 class KioskApp:
     def __init__(self, master):
-        # create idle flag ---
+        self.last_activity = datetime.now()
 
         self.master = master
         self.master.title("Lab Access")
@@ -312,7 +312,7 @@ class KioskApp:
         self.logout_button.config(state="disabled")
 
         # After 3 seconds, destroy and rerun
-        self.master.after(3000, lambda: self.master.destroy(), run())
+        self.master.after(3000, lambda: (self.master.destroy(), run()))
 
 
 def run():
