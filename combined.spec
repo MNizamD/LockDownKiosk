@@ -3,12 +3,13 @@ import sys
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
-dev_mode = input("In development? (y/N): ").strip()
-if dev_mode == "N":
+user_input = input("In development? (y/N): ").strip()
+dev_mode = user_input=="y"
+if user_input == "N":
     if input("Type 'yes' to confirm production mode: ").strip().lower() != "yes":
         print("Production unconfirmed, exiting PyInstaller...")
         sys.exit(1)
-elif not dev_mode == "y":
+elif not user_input == "y":
     print("Response unclear, exiting PyInstaller...")
     sys.exit(1)
 

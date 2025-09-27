@@ -8,7 +8,6 @@ REM ========================================================
 set TASKNAME=LockDownKiosk
 set USERONLY=GVC
 set APPDIR=C:\Users\%USERONLY%\AppData\Roaming\NizamLab
-set APPDIR=%ProgramData%\NizamLab
 set APPNAME=LockDown.exe
 
 :: Paths
@@ -16,7 +15,6 @@ set CURDIR=%~dp0
 set DESTDIR=%APPDIR%
 set XMLFILE=%CURDIR%LockDownKiosk.xml
 set APPEXEPATH=%APPDIR%\%APPNAME%
-set USERNAME=%COMPUTERNAME%\%USERONLY%
 
 :: Build ISO8601 Date for <Date>
 for /f %%I in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-ddTHH:mm:ss"') do set DATEISO=%%I
@@ -34,12 +32,12 @@ echo Generating Task Scheduler XML at "%XMLFILE%"...
 >> "%XMLFILE%" echo     ^<LogonTrigger^>
 >> "%XMLFILE%" echo       ^<Enabled^>true^</Enabled^>
 >> "%XMLFILE%" echo       ^<Delay^>PT0S^</Delay^>
->> "%XMLFILE%" echo       ^<UserId^>%USERNAME%^</UserId^>
+>> "%XMLFILE%" echo       ^<UserId^>%USERONLY%^</UserId^>
 >> "%XMLFILE%" echo     ^</LogonTrigger^>
 >> "%XMLFILE%" echo   ^</Triggers^>
 >> "%XMLFILE%" echo   ^<Principals^>
 >> "%XMLFILE%" echo     ^<Principal id="Author"^>
->> "%XMLFILE%" echo       ^<UserId^>%USERNAME%^</UserId^>
+>> "%XMLFILE%" echo       ^<UserId^>%USERONLY%^</UserId^>
 >> "%XMLFILE%" echo       ^<RunLevel^>HighestAvailable^</RunLevel^>
 >> "%XMLFILE%" echo     ^</Principal^>
 >> "%XMLFILE%" echo   ^</Principals^>
