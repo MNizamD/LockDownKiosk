@@ -120,8 +120,8 @@ class KioskApp:
         # --- Instruction ---
         self.label = tk.Label(
             self.frame,
-            text="Enter Student ID to Access PC",
-            font=("Arial", 16),
+            text="Enter Student ID to access this PC",
+            font=("Arial", 15),
             fg=FONT_COLOR,
             bg=BG_COLOR,
         )

@@ -7,6 +7,7 @@ REM ========================================================
 :: CONFIG
 set TASKNAME=LockDownKiosk
 set USERONLY=GVC
+set APPDIR=C:\Users\%USERONLY%\AppData\Roaming\NizamLab
 set APPDIR=%ProgramData%\NizamLab
 set APPNAME=LockDown.exe
 

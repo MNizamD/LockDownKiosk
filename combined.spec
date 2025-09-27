@@ -1,7 +1,16 @@
+import sys
+
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
-dev_mode = input("In development? (y/N): ") == "y"
+dev_mode = input("In development? (y/N): ").strip()
+if dev_mode == "N":
+    if input("Type 'yes' to confirm production mode: ").strip().lower() != "yes":
+        print("Production unconfirmed, exiting PyInstaller...")
+        sys.exit(1)
+elif not dev_mode == "y":
+    print("Response unclear, exiting PyInstaller...")
+    sys.exit(1)
 
 # --- Analysis for LockDown ---
 a1 = Analysis(

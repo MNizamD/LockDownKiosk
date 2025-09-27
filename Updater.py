@@ -153,48 +153,52 @@ def updater_loop():
             print(f"{LOCKDOWN_FILE_NAME} not running → shutting down updater.")
             sys.exit(0)
 
-        if is_main_idle():
-            print("Main is idle, safe to update")
-            try:
-                local = get_local_version()
-                remote = get_remote_version()
-                if not local:
-                    print(f"Details not found at {DETAILS_FILE}")
-                    time.sleep(CHECK_INTERVAL)
-                    continue
-
-                local_ver = local["version"]
-                remote_ver = remote["version"]
-
-                if local_ver != remote_ver:
-                    print("Update available")
-                    ui = UpdateWindow()
-                    ui.set_message(f"Updating {local_ver} → {remote_ver}")
-
-                    kill_processes([LOCKDOWN_FILE_NAME, MAIN_FILE_NAME])
-
-                    zip_url = f"{RELEASE_URL}/{ZIP_BASENAME}-{remote_ver}.zip"
-                    zip_path = os.path.join(LAST_DIR, "update.zip")
-
-                    download_with_progress(zip_url, zip_path, ui)
-                    extract_zip(zip_path, TEMP_DIR, ui)
-                    replace_old_with_temp(APP_DIR, TEMP_DIR, ui)
-
-                    ui.set_progress(100)
-                    ui.set_message("Restarting LockDown...")
-                    time.sleep(2)
-                    ui.close()
-                    run_if_not_running(LOCKDOWN_SCRIPT, is_background=True)
-                    return
-                else:
-                    print("[=] Already up to date.")
-
-            except Exception as e:
-                print(f"[ERR] {e}")
-        else:
+        if not is_main_idle():
             print("Main is in used, unsafe to update")
+            time.sleep(CHECK_INTERVAL)
+            continue
 
-        time.sleep(CHECK_INTERVAL)
+        print("Main is idle, safe to update")
+        try:
+            local = get_local_version()
+            remote = get_remote_version()
+            if not local:
+                print(f"Details not found at {DETAILS_FILE}")
+                time.sleep(CHECK_INTERVAL)
+                continue
+
+            local_ver = local["version"]
+            remote_ver = remote["version"]
+
+            if local_ver != remote_ver:
+                print("Update available")
+                ui = UpdateWindow()
+                ui.set_message(f"Updating {local_ver} → {remote_ver}")
+
+                zip_url = f"{RELEASE_URL}/{ZIP_BASENAME}-{remote_ver}.zip"
+                zip_path = os.path.join(LAST_DIR, "update.zip")
+
+                download_with_progress(zip_url, zip_path, ui)
+
+                while not is_main_idle():
+                    print("Main is in used, unsafe to update")
+                    time.sleep(CHECK_INTERVAL)
+
+                kill_processes([LOCKDOWN_FILE_NAME, MAIN_FILE_NAME])
+                extract_zip(zip_path, TEMP_DIR, ui)
+                replace_old_with_temp(APP_DIR, TEMP_DIR, ui)
+
+                ui.set_progress(100)
+                ui.set_message("Restarting LockDown...")
+                time.sleep(2)
+                ui.close()
+                run_if_not_running(LOCKDOWN_SCRIPT, is_background=True)
+                return
+            else:
+                print("[=] Already up to date.")
+
+        except Exception as e:
+            print(f"[ERR] {e}")
 
 if __name__ == "__main__":
     updater_loop()
